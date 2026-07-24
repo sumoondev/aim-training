@@ -1,10 +1,24 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import App from './App.jsx'
+import { Canvas } from "@react-three/fiber";
+import ReactDom from "react-dom/client";
+import "./index.css";
+import Experience from "./Experience";
 
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-)
+const root = ReactDom.createRoot(document.querySelector("#root"));
+
+root.render(
+    <>
+        <Canvas
+            camera={{
+                position: [0, 0, 15],
+                fov: 105,
+                near: 0.1,
+                far: 200,
+            }}
+        >
+            <Experience />
+        </Canvas>
+
+        
+        
+    </>
+);
