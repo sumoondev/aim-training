@@ -1,6 +1,5 @@
 import { OrbitControls, Point, PointerLockControls } from "@react-three/drei";
 import { useControls } from "leva";
-import * as THREE from 'three'
 import Room from "./Room";
 
 export default function Experience() {
@@ -19,7 +18,7 @@ export default function Experience() {
 
             <mesh>
                 <boxGeometry />
-                <meshNormalMaterial />
+                <meshStandardMaterial color="red" />
             </mesh>
 
             <Room />

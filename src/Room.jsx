@@ -10,39 +10,39 @@ export default function Room() {
                 geometry={wallGeometry}
                 material={wallMaterial}
                 position={[0, 0, -2]}
-                scale={[19, 10, 0.4]}
+                scale={[38, 30, 0.4]}
             />
 
             <mesh
                 geometry={wallGeometry}
                 material={wallMaterial}
-                position={[0, -5, 8]}
+                position={[0, -10, 8]}
                 rotation-x={Math.PI * 0.5}
-                scale={[19, 20, 0.4]}
+                scale={[38, 40, 0.4]}
             />
 
             <mesh
                 geometry={wallGeometry}
                 material={wallMaterial}
-                position={[0, 5, 8]}
+                position={[0, 10, 8]}
                 rotation-x={Math.PI * 0.5}
-                scale={[19, 20, 0.4]}
+                scale={[38, 40, 0.4]}
             />
 
             <mesh
                 geometry={wallGeometry}
                 material={wallMaterial}
-                position={[-9.5, 0, 8]}
+                position={[-19, 0, 8]}
                 rotation-y={Math.PI * 0.5}
-                scale={[19, 10, 0.4]}
+                scale={[38, 20, 0.4]}
             />
 
             <mesh
                 geometry={wallGeometry}
                 material={wallMaterial}
-                position={[9.5, 0, 8]}
+                position={[19, 0, 8]}
                 rotation-y={Math.PI * 0.5}
-                scale={[19, 10, 0.4]}
+                scale={[38, 20, 0.4]}
             />
         </>
     );
