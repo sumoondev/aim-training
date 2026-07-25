@@ -1,4 +1,4 @@
-import './Crosshair.css'
+import './styles/Crosshair.css'
 
 export default function Crosshair()
 {
