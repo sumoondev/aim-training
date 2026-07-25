@@ -7,7 +7,7 @@ export default function Experience() {
         <>
             <color args={["#ffdec3"]} attach="background" />
 
-            <PointerLockControls makeDefault />
+            <PointerLockControls makeDefault selector="#start" />
 
             <ambientLight intensity= { 1.5 } />
             <directionalLight 
@@ -15,11 +15,6 @@ export default function Experience() {
                 intensity={ 10 } 
                 color="#fffdef" 
             />
-
-            <mesh>
-                <boxGeometry />
-                <meshStandardMaterial color="red" />
-            </mesh>
 
             <Room />
             
