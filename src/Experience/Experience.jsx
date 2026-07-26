@@ -1,6 +1,6 @@
-import { OrbitControls, Point, PointerLockControls } from "@react-three/drei";
-import { useControls } from "leva";
-import Room from "./components/Room.jsx";
+import { OrbitControls, Point, PointerLockControls } from '@react-three/drei'
+import { useControls } from 'leva'
+import Room from './components/Room.jsx'
 
 export default function Experience() {
     return (
