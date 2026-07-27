@@ -1,13 +1,14 @@
 import { OrbitControls, Point, PointerLockControls } from '@react-three/drei'
 import { useControls } from 'leva'
 import Room from './components/Room.jsx'
+import Target from './components/Target.jsx'
 
 export default function Experience() {
     return (
         <>
             <color args={["#ffdec3"]} attach="background" />
 
-            <PointerLockControls makeDefault selector="#start" />
+            <PointerLockControls makeDefault />
 
             <ambientLight intensity= { 1.5 } />
             <directionalLight 
@@ -17,6 +18,7 @@ export default function Experience() {
             />
 
             <Room />
+            <Target />
             
         </>
     )

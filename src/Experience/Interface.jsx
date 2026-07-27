@@ -1,25 +1,7 @@
-import { useState, useEffect, useCallback, useRef, createContext, useContext } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useGame, PHASES } from './stores/useGame.jsx'
 
-/**
- * Game Phase Constants
- */
-
-export const PHASES = {
-    READY: 'ready',
-    PLAYING: 'playing',
-    PAUSED: 'paused',
-    ENDED: 'ended',
-}
-
-/**
- * Game State Context
- */
-
-const GameStateContext = createContext(null)
-
-export function useGameState() {
-    return useContext(GameStateContext)
-}
+export { PHASES }
 
 /**
  * Timer Hook
@@ -71,16 +53,20 @@ function ScoreDisplay({ score }) {
  * Ready Screen
  */
 
-function ReadyScreen() {
+function ReadyScreen({ onStart }) {
     return (
         <div className="phase-screen">
             <h1 className="game-title">AIM TRAINER</h1>
             <p className="game-subtitle">Click targets as fast as you can</p>
             {/*
-                id="start" is REQUIRED — PointerLockControls uses selector="#start"
-                to know which element triggers the pointer lock on click.
+                We request pointer lock directly here rather than relying on
+                drei's PointerLockControls `selector` prop, because drei binds
+                its click handler ONCE on mount to whatever `#start` element
+                exists at that time. After a PAUSED → RESTART cycle React
+                unmounts and remounts a fresh `#start` div, leaving drei's
+                click listener attached to a stale, detached element.
             */}
-            <div id="start" className="start-btn">
+            <div id="start" className="start-btn" onClick={onStart}>
                 START
             </div>
             <p className="controls-hint">ESC to pause · R to restart</p>
@@ -147,30 +133,43 @@ function StatCard({ value, label }) {
 const ROUND_DURATION = 30 // seconds — adjust to change round length
 
 export default function Interface() {
-    const [phase, setPhase] = useState(PHASES.READY)
-    const [score, setScore] = useState(0)
-    const [hits, setHits] = useState(0)
-    const [misses, setMisses] = useState(0)
+    const phase = useGame((state) => state.phase)
+    const score = useGame((state) => state.score)
+    const hits = useGame((state) => state.hits)
+    const misses = useGame((state) => state.misses)
+    const setPhase = useGame((state) => state.setPhase)
+    const resetGame = useGame((state) => state.reset)
 
+    // Don't call exitPointerLock here — doing so synchronously fires
+    // pointerlockchange, whose listener would race with this setState and
+    // overwrite ENDED with PAUSED. The ENDED screen's PLAY AGAIN button
+    // calls handleRestart, which is the one place that releases the lock.
     const endGame = useCallback(() => {
         setPhase(PHASES.ENDED)
-        document.exitPointerLock()
-    }, [])
+    }, [setPhase])
 
     const { timeLeft, reset: resetTimer } = useTimer(ROUND_DURATION, phase, endGame)
+
+    // Use a ref to track phase for the event listener to avoid stale closures
+    const phaseRef = useRef(phase)
+    useEffect(() => {
+        phaseRef.current = phase
+    }, [phase])
 
     useEffect(() => {
         const onChange = () => {
             const locked = !!document.pointerLockElement
-            if (locked && phase === PHASES.READY) {
+            const currentPhase = phaseRef.current
+
+            if (locked && (currentPhase === PHASES.READY || currentPhase === PHASES.PAUSED)) {
                 setPhase(PHASES.PLAYING)
-            } else if (!locked && phase === PHASES.PLAYING) {
+            } else if (!locked && currentPhase === PHASES.PLAYING) {
                 setPhase(PHASES.PAUSED)
             }
         }
         document.addEventListener('pointerlockchange', onChange)
         return () => document.removeEventListener('pointerlockchange', onChange)
-    }, [phase])
+    }, [setPhase])
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -184,51 +183,48 @@ export default function Interface() {
     }, [phase])
 
     // Actions
-    const handleResume = useCallback(() => {
-        document.querySelector('canvas')?.requestPointerLock()
+    // Request pointer lock directly on the canvas. Used by both the START
+    // and RESUME buttons; doing this from React (rather than relying on
+    // drei's selector-bound click listener) means a fresh `#start` element
+    // after PAUSED → RESTART still works.
+    const requestLock = useCallback(() => {
+        if (!document.pointerLockElement) document.querySelector('canvas')?.requestPointerLock()
     }, [])
 
     const handleRestart = useCallback(() => {
-        document.exitPointerLock()
-        setScore(0)
-        setHits(0)
-        setMisses(0)
+        if (document.pointerLockElement) document.exitPointerLock()
         resetTimer()
-        setPhase(PHASES.READY)
-    }, [resetTimer])
+        resetGame()
+    }, [resetTimer, resetGame])
 
     // Derived stats
     const total = hits + misses
     const accuracy = total > 0 ? Math.round((hits / total) * 100) : 0
 
-    const ctx = { phase, score, hits, misses, timeLeft, setScore, setHits, setMisses }
-
     return (
-        <GameStateContext.Provider value={ctx}>
-            <div className="interface">
-                {phase === PHASES.READY && <ReadyScreen />}
+        <div className="interface">
+            {phase === PHASES.READY && <ReadyScreen onStart={requestLock} />}
 
-                {phase === PHASES.PLAYING && (
-                    <>
-                        <Timer timeLeft={timeLeft} />
-                        <ScoreDisplay score={score} />
-                    </>
-                )}
+            {phase === PHASES.PLAYING && (
+                <>
+                    <Timer timeLeft={timeLeft} />
+                    <ScoreDisplay score={score} />
+                </>
+            )}
 
-                {phase === PHASES.PAUSED && (
-                    <PausedScreen onResume={handleResume} onRestart={handleRestart} />
-                )}
+            {phase === PHASES.PAUSED && (
+                <PausedScreen onResume={requestLock} onRestart={handleRestart} />
+            )}
 
-                {phase === PHASES.ENDED && (
-                    <EndedScreen
-                        score={score}
-                        hits={hits}
-                        misses={misses}
-                        accuracy={accuracy}
-                        onRestart={handleRestart}
-                    />
-                )}
-            </div>
-        </GameStateContext.Provider>
+            {phase === PHASES.ENDED && (
+                <EndedScreen
+                    score={score}
+                    hits={hits}
+                    misses={misses}
+                    accuracy={accuracy}
+                    onRestart={handleRestart}
+                />
+            )}
+        </div>
     )
 }
